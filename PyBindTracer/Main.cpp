@@ -9,32 +9,32 @@
 */
 struct PyInt
 {
-	int get() { return 1; }
+    int get() { return 1; }
 };
 
 static PyInt createPyInt()
 {
-	return PyInt();
+    return PyInt();
 }
 
 PYBIND11_EMBEDDED_MODULE(PyInt, m)
 {
-	auto date = pybind11::class_<PyInt>(m, "PyInt");
-	date.def("get", &PyInt::get);
-	m.def("CreatePyInt", &createPyInt);
+    auto date = pybind11::class_<PyInt>(m, "PyInt");
+    date.def("get", &PyInt::get);
+    m.def("CreatePyInt", &createPyInt);
 }
 
 PYBIND11_EMBEDDED_MODULE(PyFunctions, m)
 {
-	m.def("add", [](int i, int j) {
-		std::cout << "[ADD]: " << i << " + " << j << std::endl;
-		return i + j;
-		});
+    m.def("add", [](int i, int j) {
+        std::cout << "[ADD]: " << i << " + " << j << std::endl;
+        return i + j;
+        });
 
-	m.def("printString", [](std::string str) {
-		std::cout << "[PRINT_STRING]: " << str << std::endl;
-		return str;
-		});
+    m.def("printString", [](std::string str) {
+        std::cout << "[PRINT_STRING]: " << str << std::endl;
+        return str;
+        });
 }
 
 /*
@@ -76,50 +76,52 @@ fd.close()
 
 int main()
 {
-	pybind11::scoped_interpreter guard{};
+    pybind11::scoped_interpreter guard{};
 
-	const char* filename = "MyFile";
-	TracerInformation tracerInformation;
-	tracerInformation.m_module = filename;
+    const char* filename = "MyFile";
+    TracerInformation tracerInformation;
+    tracerInformation.m_module = filename;
 
-	PyObject * tracerInformationCapsule = PyCapsule_New(&tracerInformation, nullptr, nullptr);
-	setTracers(tracerInformationCapsule);
+    PyObject* tracerInformationCapsule
+        = PyCapsule_New(&tracerInformation, nullptr, nullptr);
 
-	try
-	{
-		pybind11::object globals = pybind11::globals();
-		pybind11::object locals = globals;
+    setTracers(tracerInformationCapsule);
 
-		pybind11::detail::ensure_builtins_in_globals(globals);
+    try
+    {
+        pybind11::object globals = pybind11::globals();
+        pybind11::object locals = globals;
 
-		std::string buffer = "# -*- coding: utf-8 -*-\n" + pythonSourceCode;
+        pybind11::detail::ensure_builtins_in_globals(globals);
 
-		auto bytecode = pybind11::reinterpret_steal<pybind11::object>(
-			Py_CompileString(buffer.c_str(), filename, Py_file_input));
+        std::string buffer = "# -*- coding: utf-8 -*-\n" + pythonSourceCode;
 
-		if (!bytecode)
-		{
-			throw pybind11::error_already_set();
-		}
+        auto bytecode = pybind11::reinterpret_steal<pybind11::object>(
+            Py_CompileString(buffer.c_str(), filename, Py_file_input));
 
-		pybind11::object result
-			= pybind11::reinterpret_steal<pybind11::object>(
-				PyEval_EvalCode(bytecode.ptr(), globals.ptr(), locals.ptr()));
+        if (!bytecode)
+        {
+            throw pybind11::error_already_set();
+        }
 
-		if (!result)
-		{
-			throw pybind11::error_already_set();
-		}
+        pybind11::object result
+            = pybind11::reinterpret_steal<pybind11::object>(
+                PyEval_EvalCode(bytecode.ptr(), globals.ptr(), locals.ptr()));
 
-	}
-	catch (const pybind11::error_already_set & e)
-	{
-		std::cerr << e.what() << std::endl;
-	}
+        if (!result)
+        {
+            throw pybind11::error_already_set();
+        }
 
-	removeTracers();
+    }
+    catch (const pybind11::error_already_set& e)
+    {
+        std::cerr << e.what() << std::endl;
+    }
 
-	Py_DECREF(tracerInformationCapsule);
+    removeTracers();
 
-	return 0;
+    Py_DECREF(tracerInformationCapsule);
+
+    return 0;
 }

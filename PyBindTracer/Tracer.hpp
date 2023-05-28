@@ -6,8 +6,8 @@
 
 struct TracerInformation
 {
-	std::string m_module;
+    std::string m_module;
 };
 
-void setTracers(PyObject * TracerInformation);
+void setTracers(PyObject* TracerInformation);
 void removeTracers();
